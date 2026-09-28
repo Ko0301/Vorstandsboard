@@ -1,1 +1,507 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vorstandsboard – SV Eintracht Emmeln</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f5f0;
+    --paper:#ffffff;
+    --ink:#1c2a20;
+    --ink-soft:#4d5b52;
+    --green:#2e6b3b;
+    --green-dark:#1f4a2a;
+    --gold:#c79a2e;
+    --line: rgba(28,42,32,0.14);
+    --col-offen:#ffffff;
+    --col-bearbeitung:#fff8e6;
+    --col-erledigt:#eef5ee;
+    --shadow: 0 1px 0 rgba(28,42,32,0.06);
+    --error:#9a3b3b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Manrope', system-ui, sans-serif;
+    font-weight:500;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:1180px;margin:0 auto;padding:20px 20px 64px;}
+
+  .board-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+  }
+  .board-header h1{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    margin:0 0 4px;
+    color:var(--green-dark);
+  }
+  .board-header p{margin:0;color:var(--ink-soft);font-size:14px;}
+  .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .whoami{
+    font-size:13px;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:6px 10px 6px 8px;
+    border-radius:8px;
+  }
+  .dot{width:10px;height:10px;border-radius:50%;flex:none;}
+  .link-btn{
+    background:none;border:none;color:var(--green-dark);
+    text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;padding:0;
+  }
+  .btn{
+    font-family:inherit;font-weight:700;font-size:14px;
+    background:var(--green);color:#fff;border:none;
+    padding:10px 16px;border-radius:8px;cursor:pointer;
+  }
+  .btn:hover{background:var(--green-dark);}
+  .btn.secondary{
+    background:transparent;color:var(--green-dark);border:1.5px solid var(--green);
+  }
+  .btn.secondary:hover{background:rgba(46,107,59,0.08);}
+  .btn.small{padding:6px 10px;font-size:12.5px;border-radius:6px;}
+  .btn.danger{background:transparent;color:#9a3b3b;border:1.5px solid transparent;}
+  .btn.danger:hover{background:rgba(154,59,59,0.08);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .icon-btn{
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:15px;color:var(--ink-soft);
+  }
+  .icon-btn:hover{color:var(--green-dark);border-color:var(--green);}
+  .icon-btn.spinning{animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;}
+  @media (max-width:860px){.board{grid-template-columns:1fr;}}
+  .column{border-radius:10px;padding:14px;min-height:120px;border:1px solid var(--line);}
+  .column.offen{background:var(--col-offen);}
+  .column.bearbeitung{background:var(--col-bearbeitung);}
+  .column.erledigt{background:var(--col-erledigt);}
+  .column-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .column-head h2{font-size:14px;font-weight:800;letter-spacing:.01em;margin:0;color:var(--green-dark);}
+  .count{font-size:12px;font-weight:700;color:var(--ink-soft);background:rgba(28,42,32,0.06);border-radius:10px;padding:2px 8px;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:12px 13px;margin-bottom:12px;box-shadow:var(--shadow);}
+  .card-title{font-size:15px;font-weight:700;margin:0 0 4px;line-height:1.3;}
+  .card-desc{font-size:13px;color:var(--ink-soft);margin:0 0 8px;white-space:pre-wrap;line-height:1.4;}
+  .meta-row{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft);margin-bottom:8px;flex-wrap:wrap;}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 8px 2px 6px;border-radius:20px;background:rgba(28,42,32,0.06);}
+  .owner-line{font-size:12px;color:var(--ink-soft);margin:2px 0 8px;}
+  .steps{list-style:none;margin:0 0 8px;padding:0;border-top:1px dashed var(--line);padding-top:8px;}
+  .steps:empty{border-top:none;padding-top:0;}
+  .step{display:flex;align-items:flex-start;gap:6px;font-size:13px;padding:3px 0;}
+  .step .step-text{flex:1;line-height:1.35;}
+  .step .step-meta{font-size:10.5px;color:var(--ink-soft);display:block;margin-top:1px;}
+  .step-del{background:none;border:none;color:#9a3b3b;cursor:pointer;font-size:15px;line-height:1;padding:0 2px;visibility:hidden;}
+  .step:hover .step-del.enabled{visibility:visible;}
+  .add-step-row{display:flex;gap:6px;margin-top:6px;}
+  .add-step-row input{flex:1;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;}
+  .card-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .done-tag{font-size:12px;color:var(--green-dark);font-weight:700;}
+  .empty-hint{font-size:12.5px;color:var(--ink-soft);font-style:italic;padding:6px 2px;}
+
+  .new-project{background:#fff;border:1.5px dashed var(--line);border-radius:9px;padding:10px;margin-bottom:12px;}
+  .new-project input, .new-project textarea{width:100%;font-family:inherit;font-size:13.5px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;margin-bottom:8px;background:#fff;}
+  .new-project textarea{resize:vertical;min-height:50px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(28,42,32,0.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .overlay-box{background:#fff;border-radius:12px;padding:22px 24px;max-width:360px;width:100%;}
+  .overlay-box h2{margin:0 0 6px;font-size:18px;color:var(--green-dark);}
+  .overlay-box p{margin:0 0 14px;font-size:13.5px;color:var(--ink-soft);line-height:1.4;}
+  .overlay-box input{width:100%;font-family:inherit;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:7px;margin-bottom:12px;}
+
+  .status-banner{
+    font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:14px;
+    background:#fdecea;color:var(--error);border:1px solid rgba(154,59,59,.25);
+  }
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px 26px;max-width:380px;width:100%;text-align:center;}
+  .login-badge{width:54px;height:54px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:3px solid var(--gold);}
+  .login-box h1{margin:0;font-size:24px;font-weight:800;color:var(--green-dark);}
+  .login-sub{margin:2px 0 14px !important;font-weight:700;color:var(--gold) !important;font-size:14px !important;}
+  .login-box p{font-size:13.5px;color:var(--ink-soft);line-height:1.45;margin:0 0 14px;}
+  .login-box input{width:100%;font-family:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;text-align:center;}
+  .loading-block{padding:40px 10px;text-align:center;color:var(--ink-soft);font-size:14px;}
+</style>
+</head>
+<body>
+<div id="app"><p style="padding:24px;color:#4d5b52;">Board wird geladen…</p></div>
+
+<script>
+(function(){
+  var SCRIPT_URL = '/api/board';
+  var PALETTE = ['#c0392b','#8e44ad','#2980b9','#d35400','#7f8c8d','#2c3e50','#16a085','#e67e22','#2e86c1','#a04ab0','#c2185b','#00796b'];
+
+  var currentUser = null;
+  var board = { projects: [] };
+  var suppressPoll = false;
+  var pollTimer = null;
+  var lastError = null;
+
+  function colorForName(name){
+    var s = 0;
+    for (var i=0;i<name.length;i++){ s += name.charCodeAt(i)*(i+7); }
+    return PALETTE[s % PALETTE.length];
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function uid(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function fmtDate(iso){
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+
+  async function getBoard(){
+    var res = await fetch(SCRIPT_URL, { method: 'GET' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var text = await res.text();
+    var parsed;
+    try { parsed = JSON.parse(text); } catch(e){ throw new Error('Unerwartete Antwort vom Speicher-Dienst'); }
+    if (parsed && Array.isArray(parsed.projects)) return parsed;
+    return { projects: [] };
+  }
+  async function saveBoard(b){
+    var res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(b)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  }
+  async function mutateBoard(mutatorFn){
+    try{
+      var fresh = await getBoard();
+      mutatorFn(fresh);
+      board = fresh;
+      await saveBoard(board);
+      lastError = null;
+      render();
+    }catch(e){
+      console.error(e);
+      lastError = 'Speichern hat nicht geklappt. Prüfe deine Internetverbindung und versuche es erneut.';
+      render();
+    }
+  }
+
+  function loadStoredName(){
+    try{ return localStorage.getItem('vorstandsboard-name') || null; }catch(e){ return null; }
+  }
+  function storeName(n){
+    try{ if(n) localStorage.setItem('vorstandsboard-name', n); else localStorage.removeItem('vorstandsboard-name'); }catch(e){}
+  }
+
+  function showLogin(){
+    var app = document.getElementById('app');
+    app.innerHTML =
+      '<div class="login-wrap"><div class="login-box">' +
+        '<div class="login-badge">SV</div>' +
+        '<h1>Vorstandsboard</h1>' +
+        '<p class="login-sub">SV Eintracht Emmeln</p>' +
+        '<p>Melde dich mit deinem Namen an. Er erscheint bei allem, was du einträgst, und bekommt automatisch eine eigene Farbe – so ist immer nachvollziehbar, wer was geschrieben hat.</p>' +
+        '<input id="name-input" type="text" placeholder="Vor- und Nachname" maxlength="40" autocomplete="name">' +
+        '<button class="btn" id="name-save" style="width:100%;">Anmelden</button>' +
+      '</div></div>';
+    var input = document.getElementById('name-input');
+    input.focus();
+    function submit(){
+      var val = input.value.trim().replace(/\s+/g,' ');
+      if (!val){ input.focus(); return; }
+      currentUser = val;
+      storeName(val);
+      render();
+    }
+    document.getElementById('name-save').addEventListener('click', submit);
+    input.addEventListener('keydown', function(e){ if (e.key==='Enter') submit(); });
+  }
+
+  function renderChip(name){
+    var c = colorForName(name);
+    return '<span class="chip" style="color:'+c+';background:'+c+'1a;">' +
+      '<span class="dot" style="background:'+c+';width:7px;height:7px;"></span>' + escapeHtml(name) + '</span>';
+  }
+
+  function stepHtml(project, step){
+    var mine = step.creator === currentUser;
+    return '<li class="step" data-step="'+step.id+'" data-project="'+project.id+'">' +
+      '<span class="dot" style="background:'+colorForName(step.creator)+';margin-top:5px;"></span>' +
+      '<span class="step-text">'+escapeHtml(step.text) +
+        '<span class="step-meta">'+escapeHtml(step.creator)+' · '+fmtDate(step.createdAt)+'</span>' +
+      '</span>' +
+      '<button class="step-del'+(mine?' enabled':'')+'" '+(mine?'':'disabled title="Nur '+escapeHtml(step.creator)+' kann diesen Eintrag löschen"')+'>×</button>' +
+    '</li>';
+  }
+
+  function cardHtml(project){
+    var mineCard = project.creator === currentUser;
+    var stepsHtml = (project.steps||[]).map(function(s){ return stepHtml(project, s); }).join('');
+    var body = '<div class="card" data-project="'+project.id+'">' +
+      '<p class="card-title">'+escapeHtml(project.title)+'</p>';
+    if (project.description){
+      body += '<p class="card-desc">'+escapeHtml(project.description)+'</p>';
+    }
+    body += '<div class="meta-row">Angelegt von '+renderChip(project.creator)+'<span>· '+fmtDate(project.createdAt)+'</span></div>';
+
+    if (project.column !== 'offen' && project.owner){
+      body += '<p class="owner-line">In Bearbeitung bei '+renderChip(project.owner)+'</p>';
+    }
+    if (project.column === 'erledigt'){
+      body += '<p class="done-tag">✓ Erledigt am '+fmtDate(project.doneAt)+'</p>';
+    }
+    if (project.column !== 'offen'){
+      body += '<ul class="steps">'+stepsHtml+'</ul>';
+    }
+    if (project.column === 'bearbeitung'){
+      body += '<div class="add-step-row">' +
+        '<input type="text" placeholder="Maßnahme / Schritt hinzufügen…" data-add-step="'+project.id+'" maxlength="240">' +
+        '<button class="btn small" data-add-step-btn="'+project.id+'">+</button>' +
+      '</div>';
+    }
+    body += '<div class="card-actions">';
+    if (project.column === 'offen'){
+      body += '<button class="btn small" data-take="'+project.id+'">Übernehmen →</button>';
+    }
+    if (project.column === 'bearbeitung'){
+      body += '<button class="btn small" data-done="'+project.id+'">Als erledigt markieren ✓</button>';
+      if (project.owner === currentUser){
+        body += '<button class="btn small secondary" data-back="'+project.id+'">Zurück zu Offen</button>';
+      }
+    }
+    if (mineCard){
+      body += '<button class="btn small danger" data-delete="'+project.id+'" style="margin-left:auto;">Projekt löschen</button>';
+    }
+    body += '</div></div>';
+    return body;
+  }
+
+  function columnHtml(key, label, extraTop){
+    var items = board.projects.filter(function(p){ return p.column === key; });
+    items.sort(function(a,b){ return new Date(b.createdAt) - new Date(a.createdAt); });
+    var html = '<div class="column '+key+'"><div class="column-head"><h2>'+label+'</h2><span class="count">'+items.length+'</span></div>';
+    if (extraTop) html += extraTop;
+    if (items.length === 0 && !extraTop){
+      html += '<p class="empty-hint">Noch nichts hier.</p>';
+    }
+    html += items.map(cardHtml).join('');
+    return html + '</div>';
+  }
+
+  function newProjectFormHtml(){
+    return '<div class="new-project">' +
+      '<input type="text" id="np-title" placeholder="Projekt / Vorhaben" maxlength="120">' +
+      '<textarea id="np-desc" placeholder="Kurze Beschreibung (optional)"></textarea>' +
+      '<button class="btn small" id="np-save">Projekt anlegen</button>' +
+    '</div>';
+  }
+
+  function render(){
+    var app = document.getElementById('app');
+    if (!currentUser){ showLogin(); return; }
+    var myColor = colorForName(currentUser);
+    var banner = lastError ? '<div class="status-banner">⚠️ '+escapeHtml(lastError)+'</div>' : '';
+    app.innerHTML =
+      '<div class="board-header">' +
+        '<div><h1>Vorstandsboard – SV Eintracht Emmeln</h1><p>Gemeinsames Kanban-Board für die Vorstandsarbeit. Jede:r mit dem Link kann mitarbeiten – ganz ohne Konto.</p></div>' +
+        '<div class="header-right">' +
+          '<span class="whoami"><span class="dot" style="background:'+myColor+';"></span>'+escapeHtml(currentUser)+' <button class="link-btn" id="change-name">Abmelden</button></span>' +
+          '<button class="icon-btn" id="refresh-btn" title="Aktualisieren">⟳</button>' +
+        '</div>' +
+      '</div>' +
+      banner +
+      '<div class="board">' +
+        columnHtml('offen', 'Offen', newProjectFormHtml()) +
+        columnHtml('bearbeitung', 'In Bearbeitung') +
+        columnHtml('erledigt', 'Erledigt') +
+      '</div>';
+
+    attachHandlers();
+  }
+
+  function attachHandlers(){
+    var app = document.getElementById('app');
+
+    var changeBtn = document.getElementById('change-name');
+    if (changeBtn) changeBtn.addEventListener('click', function(){ currentUser = null; storeName(null); showLogin(); });
+
+    var refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) refreshBtn.addEventListener('click', async function(){
+      refreshBtn.classList.add('spinning');
+      try{ board = await getBoard(); lastError = null; }
+      catch(e){ lastError = 'Aktualisieren fehlgeschlagen. Prüfe die Internetverbindung.'; }
+      refreshBtn.classList.remove('spinning');
+      render();
+    });
+
+    var npSave = document.getElementById('np-save');
+    if (npSave){
+      npSave.addEventListener('click', async function(){
+        var title = document.getElementById('np-title').value.trim();
+        var desc = document.getElementById('np-desc').value.trim();
+        if (!title) { document.getElementById('np-title').focus(); return; }
+        await mutateBoard(function(b){
+          b.projects.push({
+            id: uid(), title: title, description: desc, column: 'offen',
+            creator: currentUser, createdAt: new Date().toISOString(),
+            owner: null, steps: [], doneAt: null
+          });
+        });
+      });
+    }
+
+    app.querySelectorAll('[data-take]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-take');
+        mutateBoard(function(b){
+          var p = b.projects.find(function(x){ return x.id === id; });
+          if (p && p.column === 'offen'){ p.column = 'bearbeitung'; p.owner = currentUser; }
+        });
+      });
+    });
+
+    app.querySelectorAll('[data-back]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-back');
+        mutateBoard(function(b){
+          var p = b.projects.find(function(x){ return x.id === id; });
+          if (p && p.owner === currentUser){ p.column = 'offen'; p.owner = null; }
+        });
+      });
+    });
+
+    app.querySelectorAll('[data-done]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-done');
+        mutateBoard(function(b){
+          var p = b.projects.find(function(x){ return x.id === id; });
+          if (p){ p.column = 'erledigt'; p.doneAt = new Date().toISOString(); }
+        });
+      });
+    });
+
+    app.querySelectorAll('[data-delete]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-delete');
+        if (!confirm('Dieses Projekt wirklich löschen?')) return;
+        mutateBoard(function(b){
+          var p = b.projects.find(function(x){ return x.id === id; });
+          if (p && p.creator === currentUser){
+            b.projects = b.projects.filter(function(x){ return x.id !== id; });
+          }
+        });
+      });
+    });
+
+    app.querySelectorAll('[data-add-step-btn]').forEach(function(btn){
+      btn.addEventListener('click', function(){ submitStep(btn.getAttribute('data-add-step-btn')); });
+    });
+    app.querySelectorAll('[data-add-step]').forEach(function(input){
+      input.addEventListener('focus', function(){ suppressPoll = true; });
+      input.addEventListener('blur', function(){ suppressPoll = false; });
+      input.addEventListener('keydown', function(e){
+        if (e.key === 'Enter'){ submitStep(input.getAttribute('data-add-step')); }
+      });
+    });
+
+    function submitStep(projectId){
+      var input = app.querySelector('[data-add-step="'+projectId+'"]');
+      if (!input) return;
+      var text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      mutateBoard(function(b){
+        var p = b.projects.find(function(x){ return x.id === projectId; });
+        if (p){
+          p.steps = p.steps || [];
+          p.steps.push({ id: uid(), text: text, creator: currentUser, createdAt: new Date().toISOString() });
+        }
+      });
+    }
+
+    app.querySelectorAll('.step-del.enabled').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var li = btn.closest('.step');
+        var projectId = li.getAttribute('data-project');
+        var stepId = li.getAttribute('data-step');
+        mutateBoard(function(b){
+          var p = b.projects.find(function(x){ return x.id === projectId; });
+          if (p){
+            var step = (p.steps||[]).find(function(s){ return s.id === stepId; });
+            if (step && step.creator === currentUser){
+              p.steps = p.steps.filter(function(s){ return s.id !== stepId; });
+            }
+          }
+        });
+      });
+    });
+
+    ['np-title','np-desc'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el){
+        el.addEventListener('focus', function(){ suppressPoll = true; });
+        el.addEventListener('blur', function(){ suppressPoll = false; });
+      }
+    });
+  }
+
+  async function poll(){
+    if (suppressPoll || !currentUser) return;
+    try{
+      var fresh = await getBoard();
+      if (JSON.stringify(fresh) !== JSON.stringify(board)){
+        board = fresh;
+        lastError = null;
+        render();
+      }
+    }catch(e){ /* silent - keep last good state, next poll may succeed */ }
+  }
+
+  async function init(){
+    var app = document.getElementById('app');
+    app.innerHTML = '<div class="loading-block">Board wird geladen…</div>';
+    try{
+      board = await getBoard();
+    }catch(e){
+      app.innerHTML =
+        '<div class="loading-block">' +
+        '<p><strong>Das Board konnte nicht geladen werden.</strong></p>' +
+        '<p>Mögliche Ursache: Die Speicher-Funktion ist noch nicht (richtig) veröffentlicht. Bitte in Netlify unter Functions prüfen, ob "board" aufgeführt ist.</p>' +
+        '<button class="btn" id="retry-btn" style="margin-top:10px;">Erneut versuchen</button>' +
+        '</div>';
+      var retry = document.getElementById('retry-btn');
+      if (retry) retry.addEventListener('click', init);
+      return;
+    }
+    currentUser = loadStoredName();
+    render();
+    pollTimer = setInterval(poll, 7000);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
 
